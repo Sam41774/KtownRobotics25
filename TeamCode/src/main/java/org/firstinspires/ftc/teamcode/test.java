@@ -75,6 +75,8 @@ public class test extends LinearOpMode {
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
 
+    private DcMotor horizontalSlide = null;
+
     @Override
     public void runOpMode() {
 
@@ -84,6 +86,10 @@ public class test extends LinearOpMode {
         leftBackDrive  = hardwareMap.get(DcMotor.class, "lb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rl");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
+
+        //horizontalslide
+        horizontalSlide = hardwareMap.get(DcMotor.class,"horzSlide");
+        horizontalSlide.setDirection(DcMotor.Direction.FORWARD);
 
         leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -108,6 +114,10 @@ public class test extends LinearOpMode {
             double lateral =  gamepad1.left_stick_x;
             double yaw     =  gamepad1.right_stick_x;
 
+            double rotationPos = gamepad1.right_trigger;
+            double rotationNeg = gamepad1.left_trigger;
+            double slidePower = rotationPos - rotationNeg;
+
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
             double leftFrontPower  = axial + lateral + yaw;
@@ -127,6 +137,9 @@ public class test extends LinearOpMode {
                 leftBackPower   /= max;
                 rightBackPower  /= max;
             }
+
+            // set horizontal slide power
+            horizontalSlide.setPower(slidePower);
 
 
             // Send calculated power to wheels
