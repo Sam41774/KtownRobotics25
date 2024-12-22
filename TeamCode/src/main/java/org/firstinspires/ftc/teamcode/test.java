@@ -130,10 +130,10 @@ public class test extends LinearOpMode {
 
 
             // Send calculated power to wheels
-            leftFrontDrive.setPower(leftFrontPower * 0.25);
-            rightFrontDrive.setPower(rightFrontPower * 0.25);
-            leftBackDrive.setPower(leftBackPower * 0.25);
-            rightBackDrive.setPower(rightBackPower * 0.25);
+            leftFrontDrive.setPower(leftFrontPower);
+            rightFrontDrive.setPower(rightFrontPower);
+            leftBackDrive.setPower(leftBackPower);
+            rightBackDrive.setPower(rightBackPower);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
