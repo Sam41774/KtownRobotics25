@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -74,8 +75,10 @@ public class test extends LinearOpMode {
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
-
     private DcMotor horizontalSlide = null;
+    private DcMotor claw;
+    private Servo arm;
+    private Servo armLeft;
 
     @Override
     public void runOpMode() {
@@ -90,6 +93,24 @@ public class test extends LinearOpMode {
         //horizontalslide
         horizontalSlide = hardwareMap.get(DcMotor.class,"horzSlide");
         horizontalSlide.setDirection(DcMotor.Direction.FORWARD);
+        horizontalSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // Turn the motor back on, required if you use STOP_AND_RESET_ENCODER
+        horizontalSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        int horizontalSlideMax = 1150;
+
+        //claw
+        claw = hardwareMap.get(DcMotor.class,"claw");
+        claw.setDirection(DcMotor.Direction.REVERSE);
+
+
+
+        //arm
+        double servoMax = 0.85;
+        double servoMin = 0.2;
+        arm = hardwareMap.get(Servo.class,"arm");
+        arm.setPosition(servoMin);
+        armLeft = hardwareMap.get(Servo.class,"armLeft");
+        armLeft.setPosition(1-servoMin);
 
         leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -108,15 +129,16 @@ public class test extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double max;
+            int position = horizontalSlide.getCurrentPosition();
+
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
             double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
             double lateral =  gamepad1.left_stick_x;
             double yaw     =  gamepad1.right_stick_x;
 
-            double rotationPos = gamepad1.right_trigger;
-            double rotationNeg = gamepad1.left_trigger;
-            double slidePower = rotationPos - rotationNeg;
+
+
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -131,6 +153,10 @@ public class test extends LinearOpMode {
             max = Math.max(max, Math.abs(leftBackPower));
             max = Math.max(max, Math.abs(rightBackPower));
 
+            if (gamepad1.right_bumper){
+                max/=2;
+            }
+
             if (max > 1.0) {
                 leftFrontPower  /= max;
                 rightFrontPower /= max;
@@ -138,8 +164,28 @@ public class test extends LinearOpMode {
                 rightBackPower  /= max;
             }
 
+
+
+
+
+            if (gamepad1.x){
+                horizontalSlide.setTargetPosition(horizontalSlideMax);
+                horizontalSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                horizontalSlide.setPower(0.5);
+                claw.setPower(0.4);
+                arm.setPosition(servoMax);
+                armLeft.setPosition(1-servoMax);
+            }
+            else if (gamepad1.y){
+                horizontalSlide.setTargetPosition(0);
+                horizontalSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                horizontalSlide.setPower(0.5);
+                arm.setPosition(servoMin);
+                armLeft.setPosition(1-servoMin);
+                claw.setPower(0);
+            }
+
             // set horizontal slide power
-            horizontalSlide.setPower(slidePower);
 
 
             // Send calculated power to wheels
@@ -148,7 +194,9 @@ public class test extends LinearOpMode {
             leftBackDrive.setPower(leftBackPower);
             rightBackDrive.setPower(rightBackPower);
 
-            // Show the elapsed game time and wheel power.
+            position = horizontalSlide.getCurrentPosition();
+
+            telemetry.addData("Encoder Position", position);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
