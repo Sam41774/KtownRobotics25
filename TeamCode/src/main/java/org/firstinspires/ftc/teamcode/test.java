@@ -171,7 +171,7 @@ public class test extends LinearOpMode {
             if (gamepad1.x){
                 horizontalSlide.setTargetPosition(horizontalSlideMax);
                 horizontalSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                horizontalSlide.setPower(0.5);
+                horizontalSlide.setPower(1);
                 claw.setPower(0.4);
                 arm.setPosition(servoMax);
                 armLeft.setPosition(1-servoMax);
@@ -179,7 +179,7 @@ public class test extends LinearOpMode {
             else if (gamepad1.y){
                 horizontalSlide.setTargetPosition(0);
                 horizontalSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                horizontalSlide.setPower(0.5);
+                horizontalSlide.setPower(1);
                 arm.setPosition(servoMin);
                 armLeft.setPosition(1-servoMin);
                 claw.setPower(0);
