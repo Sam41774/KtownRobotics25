@@ -96,7 +96,7 @@ public class test extends LinearOpMode {
         horizontalSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // Turn the motor back on, required if you use STOP_AND_RESET_ENCODER
         horizontalSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        int horizontalSlideMax = 1150;
+        int horizontalSlideMax = 400;
 
         //claw
         claw = hardwareMap.get(DcMotor.class,"claw");
@@ -171,15 +171,15 @@ public class test extends LinearOpMode {
             if (gamepad1.x){
                 horizontalSlide.setTargetPosition(horizontalSlideMax);
                 horizontalSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                horizontalSlide.setPower(1);
-                claw.setPower(0.4);
+                horizontalSlide.setPower(.8);
+                claw.setPower(0.6);
                 arm.setPosition(servoMax);
                 armLeft.setPosition(1-servoMax);
             }
             else if (gamepad1.y){
                 horizontalSlide.setTargetPosition(0);
                 horizontalSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                horizontalSlide.setPower(1);
+                horizontalSlide.setPower(.8);
                 arm.setPosition(servoMin);
                 armLeft.setPosition(1-servoMin);
                 claw.setPower(0);
