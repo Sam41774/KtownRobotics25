@@ -79,6 +79,10 @@ public class test extends LinearOpMode {
     private DcMotor claw;
     private Servo arm;
     private Servo armLeft;
+    private boolean toggle = false; // Initial toggle state
+    private boolean lastAState = false; // Keeps track of the previous state of the A button
+    private double ArmPosition = 0.0;
+    private double leftArmPosition = 0.0;
 
     @Override
     public void runOpMode() {
@@ -96,17 +100,20 @@ public class test extends LinearOpMode {
         horizontalSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // Turn the motor back on, required if you use STOP_AND_RESET_ENCODER
         horizontalSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        int horizontalSlideMax = 400;
+        int horizontalSlideMax = 1100;
 
         //claw
         claw = hardwareMap.get(DcMotor.class,"claw");
         claw.setDirection(DcMotor.Direction.REVERSE);
+        claw.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        claw.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
 
         //arm
-        double servoMax = 0.85;
+        double servoMax = 0.83;
         double servoMin = 0.2;
+
         arm = hardwareMap.get(Servo.class,"arm");
         arm.setPosition(servoMin);
         armLeft = hardwareMap.get(Servo.class,"armLeft");
@@ -129,7 +136,10 @@ public class test extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double max;
-            int position = horizontalSlide.getCurrentPosition();
+            int rightTrigger;
+            int leftTrigger;
+            boolean currentAState = gamepad1.a;
+            int HorizontalSlideposition = horizontalSlide.getCurrentPosition();
 
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -153,8 +163,8 @@ public class test extends LinearOpMode {
             max = Math.max(max, Math.abs(leftBackPower));
             max = Math.max(max, Math.abs(rightBackPower));
 
-            if (gamepad1.right_bumper){
-                max/=2;
+            if (!gamepad1.right_bumper){
+                max*=2;
             }
 
             if (max > 1.0) {
@@ -165,27 +175,56 @@ public class test extends LinearOpMode {
             }
 
 
-
-
-
             if (gamepad1.x){
                 horizontalSlide.setTargetPosition(horizontalSlideMax);
                 horizontalSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 horizontalSlide.setPower(.8);
+
+                claw.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 claw.setPower(0.6);
-                arm.setPosition(servoMax);
-                armLeft.setPosition(1-servoMax);
+
             }
             else if (gamepad1.y){
                 horizontalSlide.setTargetPosition(0);
                 horizontalSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 horizontalSlide.setPower(.8);
-                arm.setPosition(servoMin);
-                armLeft.setPosition(1-servoMin);
-                claw.setPower(0);
+
+                ArmPosition = servoMin;
+                leftArmPosition = 1-servoMin;
+                arm.setPosition(ArmPosition);
+                armLeft.setPosition(leftArmPosition);
+
+                claw.setTargetPosition(claw.getCurrentPosition());
+                claw.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                claw.setPower(.2);
             }
 
-            // set horizontal slide power
+            // Detect a button press (transition from not pressed to pressed)
+            if (currentAState && !lastAState) {
+                toggle = !toggle; // Flip the toggle state
+            }
+            lastAState = currentAState;
+
+            // Set the servo position based on the toggle state
+            if (toggle) {
+                ArmPosition = servoMax;
+                leftArmPosition = 1-servoMax;
+            } else {
+                ArmPosition = servoMin;
+                leftArmPosition = 1-servoMin;
+            }
+            arm.setPosition(ArmPosition);
+            armLeft.setPosition(leftArmPosition);
+
+
+
+
+            if (gamepad1.b){
+
+                claw.setTargetPosition(claw.getCurrentPosition()-45);
+                claw.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                claw.setPower(.2);
+            }
 
 
             // Send calculated power to wheels
@@ -194,9 +233,9 @@ public class test extends LinearOpMode {
             leftBackDrive.setPower(leftBackPower);
             rightBackDrive.setPower(rightBackPower);
 
-            position = horizontalSlide.getCurrentPosition();
+            HorizontalSlideposition = horizontalSlide.getCurrentPosition();
 
-            telemetry.addData("Encoder Position", position);
+            telemetry.addData("Horizontal Slide Position", HorizontalSlideposition);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
