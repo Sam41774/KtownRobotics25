@@ -83,6 +83,10 @@ public class test extends LinearOpMode {
     private boolean lastAState = false; // Keeps track of the previous state of the A button
     private double ArmPosition = 0.0;
     private double leftArmPosition = 0.0;
+    private DcMotor leftSlide = null;
+    private DcMotor rightSlide = null;
+    private final int SLIDE_MAX = 1000;
+    private final int SLIDE_MIN = 0;
 
     @Override
     public void runOpMode() {
@@ -124,6 +128,17 @@ public class test extends LinearOpMode {
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
 
+        leftSlide =hardwareMap.get(DcMotor.class, "leftSlide");
+        rightSlide = hardwareMap.get(DcMotor.class,"rightSlide");
+        leftSlide.setDirection(DcMotor.Direction.FORWARD);
+        rightSlide.setDirection(DcMotor.Direction.REVERSE);
+        leftSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -136,8 +151,8 @@ public class test extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double max;
-            int rightTrigger;
-            int leftTrigger;
+            double rightTrigger = gamepad1.right_trigger;
+            double leftTrigger = gamepad1.left_trigger;
             boolean currentAState = gamepad1.a;
             int HorizontalSlideposition = horizontalSlide.getCurrentPosition();
 
@@ -156,6 +171,21 @@ public class test extends LinearOpMode {
             double rightFrontPower = axial - lateral - yaw;
             double leftBackPower   = axial - lateral + yaw;
             double rightBackPower  = axial + lateral - yaw;
+
+            double slidePower = gamepad1.right_trigger - gamepad1.left_trigger;
+            int leftSlidePosition = leftSlide.getCurrentPosition();
+            int rightSlidePosition = rightSlide.getCurrentPosition();
+
+            if (slidePower > 0 && leftSlidePosition < SLIDE_MAX && rightSlidePosition < SLIDE_MAX) {
+                leftSlide.setPower(slidePower);
+                rightSlide.setPower(slidePower);
+            } else if (slidePower < 0 && leftSlidePosition > SLIDE_MIN && rightSlidePosition > SLIDE_MIN) {
+                leftSlide.setPower(slidePower);
+                rightSlide.setPower(slidePower);
+            } else {
+                leftSlide.setPower(0);
+                rightSlide.setPower(0);
+            }
 
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
@@ -235,6 +265,9 @@ public class test extends LinearOpMode {
 
             HorizontalSlideposition = horizontalSlide.getCurrentPosition();
 
+
+            telemetry.addData("Left Slide Position", leftSlidePosition);
+            telemetry.addData("Right Slide Position", rightSlidePosition);
             telemetry.addData("Horizontal Slide Position", HorizontalSlideposition);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
